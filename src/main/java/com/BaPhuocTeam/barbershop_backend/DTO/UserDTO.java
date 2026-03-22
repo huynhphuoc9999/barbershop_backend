@@ -1,0 +1,37 @@
+package com.BaPhuocTeam.barbershop_backend.DTO;
+
+import com.BaPhuocTeam.barbershop_backend.Entity.Carts;
+import com.BaPhuocTeam.barbershop_backend.Enum.RoleEnum;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import lombok.Data;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+@Data
+public class UserDTO {
+
+    private Long id;
+
+    private String username;
+
+    private String email;
+
+    private String phoneNumber;
+
+    private String address;
+
+    private LocalDate birthDay;
+
+    private String img;
+
+    private RoleEnum roleEnum;
+
+    private String description;
+
+    private boolean isDeleted;
+
+    private Long cartId;
+}

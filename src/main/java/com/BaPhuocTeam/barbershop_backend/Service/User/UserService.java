@@ -1,0 +1,31 @@
+package com.BaPhuocTeam.barbershop_backend.Service.User;
+
+import com.BaPhuocTeam.barbershop_backend.DTO.LoginDTO;
+import com.BaPhuocTeam.barbershop_backend.DTO.RegisterDTO;
+import com.BaPhuocTeam.barbershop_backend.DTO.ResetPasswordDTO;
+import com.BaPhuocTeam.barbershop_backend.DTO.UserDTO;
+import com.BaPhuocTeam.barbershop_backend.Response.APIResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+
+public interface UserService {
+    APIResponse register(RegisterDTO registerDTO, MultipartFile img) throws IOException;
+    APIResponse login(LoginDTO loginDTO, HttpServletResponse response, HttpServletRequest request);
+    APIResponse processOAuthPostLogin(UserDTO userDTO);
+    APIResponse getAllUser();
+    APIResponse getUserInfo(UserDetails userDetails);
+    APIResponse getUserByPage(int page, int size);
+    APIResponse getUserById(Long id, UserDetails userDetails);
+    APIResponse updateUser(Long id, UserDTO userDTO, MultipartFile img) throws IOException;
+    APIResponse deleteUser(Long id);
+    APIResponse restoreUser(Long id);
+    APIResponse searchUser(String keyword, int page, int size);
+    APIResponse sendOtpToEmail(String email) throws Exception;
+    APIResponse verifyOtpAndChangePassword(ResetPasswordDTO resetPasswordDTO) throws Exception;
+    APIResponse logout(Long id, HttpServletResponse response);
+}
+

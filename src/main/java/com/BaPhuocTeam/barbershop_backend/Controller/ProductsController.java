@@ -1,0 +1,59 @@
+package com.BaPhuocTeam.barbershop_backend.Controller;
+
+import com.BaPhuocTeam.barbershop_backend.DTO.ProductsDTO;
+import com.BaPhuocTeam.barbershop_backend.DTO.ShopDTO;
+import com.BaPhuocTeam.barbershop_backend.Response.APIResponse;
+import com.BaPhuocTeam.barbershop_backend.Service.Product.ProductService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+
+@RestController
+@RequestMapping("/api")
+public class ProductsController {
+
+    @Autowired
+    private ProductService productService;
+
+    @PostMapping("/owner/products/add")
+    public ResponseEntity<APIResponse> addProduct(@RequestPart(name = "product") ProductsDTO productsDTO,
+                                               @RequestPart(name = "img",required = false) MultipartFile img) throws IOException {
+        return ResponseEntity.ok(productService.addProduct(productsDTO,img));
+    }
+
+    @GetMapping("/customer/products/page")
+    public ResponseEntity<APIResponse> getProductByPage(@RequestParam(defaultValue = "0") int page,
+                                                     @RequestParam(defaultValue = "6") int size) throws IOException {
+        return ResponseEntity.ok(productService.getProductByPage(page, size));
+    }
+
+    @GetMapping("/customer/products/{id}")
+    public ResponseEntity<APIResponse> getProductById(@PathVariable Long id) throws IOException {
+        return ResponseEntity.ok(productService.getProductById(id));
+    }
+
+    @GetMapping("/customer/products/shopId/{shopId}")
+    public ResponseEntity<APIResponse> getProductByShopId(@PathVariable Long shopId) throws IOException {
+        return ResponseEntity.ok(productService.getProductByShopId(shopId));
+    }
+
+    @PutMapping("/owner/products/update/{id}")
+    public ResponseEntity<APIResponse> updateProduct(@PathVariable Long id,
+                                                  @RequestPart(name = "product") ProductsDTO productsDTO,
+                                                  @RequestPart(name = "img", required = false) MultipartFile img) throws IOException {
+        return ResponseEntity.ok(productService.updateProduct(id,productsDTO,img));
+    }
+
+    @DeleteMapping("/owner/products/delete/{id}")
+    public ResponseEntity<APIResponse> deleteProduct(@PathVariable Long id) throws IOException {
+        return ResponseEntity.ok(productService.deleteProduct(id));
+    }
+
+    @PutMapping("/owner/products/restore/{id}")
+    public ResponseEntity<APIResponse> restoreProduct(@PathVariable Long id) throws IOException {
+        return ResponseEntity.ok(productService.restoreProduct(id));
+    }
+}
