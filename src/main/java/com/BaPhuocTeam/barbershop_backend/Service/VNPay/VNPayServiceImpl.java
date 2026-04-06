@@ -16,6 +16,8 @@ import com.BaPhuocTeam.barbershop_backend.Repository.PaymentsRepository;
 import com.BaPhuocTeam.barbershop_backend.Repository.UsersRepository;
 import com.BaPhuocTeam.barbershop_backend.Response.APIResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.transaction.Transactional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -177,6 +179,7 @@ public class VNPayServiceImpl implements VNPayService{
         return apiResponse;
     }
 
+    @Transactional
     @Override
     public APIResponse executePayment(HttpServletRequest request) {
         APIResponse response = new APIResponse();
