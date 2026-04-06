@@ -210,11 +210,26 @@ public class VNPayServiceImpl implements VNPayService{
                 payments.setCreatedAt(LocalDateTime.now());
                 payments.setUpdatedAt(LocalDateTime.now());
                 if(payments.getOrders() != null) {
-                    payments.getOrders().setStatus(OrderStatus.PAID);
+                 
+                    Orders orders = null;
+                    orders = orderRepository.findById(payments.getOrders().getId()).orElseThrow(
+                    () -> new NotFoundException("Order not found")
+                );
+orders.setStatus(OrderStatus.PAID);
+            orderRepository.save(orders);
+      
                 }
                 if(payments.getAppointments() != null) {
-                    payments.getAppointments().setPaid(true);
+                 
+                      Appointments appointments = null;
+      
+             appointments = appointmentsRepository.findById(payments.getAppointments().getId()).orElseThrow(
+                    () -> new NotFoundException("Appointment not found")
+            );
+        appointments.setPaid(true);
+        appointmentsRepository.save(appointments);
                 }
+
 
                 paymentsRepository.save(payments);
 
