@@ -26,11 +26,11 @@ public class Payments {
     @JoinColumn(name = "customer_id")
     private Users customer;
 
-    @OneToOne
+    @ManyToOne()
     @JoinColumn(name = "appointment_id", referencedColumnName = "id")
     private Appointments appointments;
 
-    @OneToOne
+    @ManyToOne()
     @JoinColumn(name = "order_id", referencedColumnName = "id")
     private Orders orders;
 
