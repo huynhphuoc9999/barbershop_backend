@@ -92,6 +92,7 @@ public class VNPayServiceImpl implements VNPayService{
     }
 
 
+    @Transactional
     @Override
     public APIResponse createPayment(HttpServletRequest request, PaymentDTO paymentDTO) throws NoSuchAlgorithmException, InvalidKeyException {
         APIResponse apiResponse = new APIResponse();
@@ -101,13 +102,14 @@ public class VNPayServiceImpl implements VNPayService{
         );
 
         Orders orders = null;
+        Appointments appointments = null;
         if(paymentDTO.getOrderId() != null) {
              orders = orderRepository.findById(paymentDTO.getOrderId()).orElseThrow(
                     () -> new NotFoundException("Order not found")
             );
         }
-        Appointments appointments = null;
-        if(paymentDTO.getAppointmentId() != null) {
+        
+        else if(paymentDTO.getAppointmentId() != null) {
              appointments = appointmentsRepository.findById(paymentDTO.getAppointmentId()).orElseThrow(
                     () -> new NotFoundException("Appointment not found")
             );
@@ -122,7 +124,8 @@ public class VNPayServiceImpl implements VNPayService{
         if(orders != null) {
             transaction.setOrders(orders);
             transaction.setPaymentType(PaymentType.PRODUCT);
-        }else if (appointments != null) {
+        }
+        else if (appointments != null) {
             transaction.setAppointments(appointments);
             transaction.setPaymentType(PaymentType.BOOKING);
         }
