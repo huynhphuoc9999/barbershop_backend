@@ -27,11 +27,11 @@ public class Payments {
     private Users customer;
 
     @ManyToOne()
-    @JoinColumn(name = "appointment_id", referencedColumnName = "id")
+    @JoinColumn(name = "appointment_id")
     private Appointments appointments;
 
     @ManyToOne()
-    @JoinColumn(name = "order_id", referencedColumnName = "id")
+    @JoinColumn(name = "order_id")
     private Orders orders;
 
     private Double amount;

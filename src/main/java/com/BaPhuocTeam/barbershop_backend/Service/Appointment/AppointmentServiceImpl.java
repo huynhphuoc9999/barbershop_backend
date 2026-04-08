@@ -79,7 +79,7 @@ public class AppointmentServiceImpl implements AppointmentService{
         appointment.setBarber(barber);
         appointment.setServices(services);
         appointment.setShop(shop);
-        appointment.setPayments(null);
+    
         appointment.setPrice(appointmentDTO.getPrice());
         appointment.setCreatedAt(LocalDateTime.now());
         appointment.setUpdatedAt(null);
@@ -267,9 +267,7 @@ public class AppointmentServiceImpl implements AppointmentService{
             appointment.setServices(null);
         }
 
-        if(appointmentDTO.getPayments() != null) {
-            appointment.setPayments(null);
-        }
+       
 
         if(appointmentDTO.getPrice() != null) {
             appointment.setPrice(appointmentDTO.getPrice());

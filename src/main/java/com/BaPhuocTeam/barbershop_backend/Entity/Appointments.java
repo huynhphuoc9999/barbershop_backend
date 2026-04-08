@@ -50,9 +50,6 @@ public class Appointments {
     )
     private List<Services> services;
 
-    @OneToOne(mappedBy = "appointments", cascade = CascadeType.ALL)
-    private Payments payments;
-
     @ManyToOne()
     @JoinColumn(name = "shop_id")
     private Shops shop;

@@ -109,11 +109,20 @@ public class VNPayServiceImpl implements VNPayService{
             );
         }
         
-        else if(paymentDTO.getAppointmentId() != null) {
+        if(paymentDTO.getAppointmentId() != null) {
              appointments = appointmentsRepository.findById(paymentDTO.getAppointmentId()).orElseThrow(
                     () -> new NotFoundException("Appointment not found")
             );
         }
+
+
+        if(paymentDTO.getOrderId() == null && paymentDTO.getAppointmentId() == null){
+    throw new RuntimeException("Payment must belong to order or appointment");
+}
+
+if(paymentDTO.getOrderId() != null && paymentDTO.getAppointmentId() != null){
+    throw new RuntimeException("Payment cannot belong to both");
+}
 
         Payments transaction = new Payments();
         transaction.setAmount(paymentDTO.getAmount());
@@ -125,7 +134,7 @@ public class VNPayServiceImpl implements VNPayService{
             transaction.setOrders(orders);
             transaction.setPaymentType(PaymentType.PRODUCT);
         }
-        else if (appointments != null) {
+        else if(appointments != null) {
             transaction.setAppointments(appointments);
             transaction.setPaymentType(PaymentType.BOOKING);
         }
@@ -148,7 +157,7 @@ public class VNPayServiceImpl implements VNPayService{
         vnpParams.put("vnp_OrderInfo", ORDER_INFO);
         vnpParams.put("vnp_OrderType", orderType);
         vnpParams.put("vnp_Locale", "vn");
-        vnpParams.put("vnp_ReturnUrl", vnpReturnUrl + "?userId=" + paymentDTO.getUserId() + "&orderId=" + paymentDTO.getOrderId());
+        vnpParams.put("vnp_ReturnUrl", vnpReturnUrl + "?userId=" + paymentDTO.getUserId() + "&orderId=" + paymentDTO.getOrderId() + "&appointmentId=" + paymentDTO.getAppointmentId());
         vnpParams.put("vnp_IpAddr", vnp_IpAddr);
 
         Calendar cal = Calendar.getInstance();
@@ -216,23 +225,16 @@ public class VNPayServiceImpl implements VNPayService{
                 payments.setCreatedAt(LocalDateTime.now());
                 payments.setUpdatedAt(LocalDateTime.now());
                 if(payments.getOrders() != null) {
-                 
-                    Orders orders = null;
-                    orders = orderRepository.findById(payments.getOrders().getId()).orElseThrow(
-                    () -> new NotFoundException("Order not found")
-                );
+                    
+                Orders orders = payments.getOrders();
 orders.setStatus(OrderStatus.PAID);
             orderRepository.save(orders);
       
                 }
                 if(payments.getAppointments() != null) {
                  
-                      Appointments appointments = null;
-      
-             appointments = appointmentsRepository.findById(payments.getAppointments().getId()).orElseThrow(
-                    () -> new NotFoundException("Appointment not found")
-            );
-        appointments.setPaid(true);
+                Appointments appointments = payments.getAppointments();
+appointments.setPaid(true);
         appointmentsRepository.save(appointments);
                 }
 
