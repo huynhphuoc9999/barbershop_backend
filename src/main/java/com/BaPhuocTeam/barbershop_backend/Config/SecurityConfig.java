@@ -4,6 +4,7 @@ import com.BaPhuocTeam.barbershop_backend.Entity.Users;
 import com.BaPhuocTeam.barbershop_backend.Enum.RoleEnum;
 import com.BaPhuocTeam.barbershop_backend.Repository.UsersRepository;
 import com.BaPhuocTeam.barbershop_backend.Service.Google.CustomOAuth2User;
+import com.BaPhuocTeam.barbershop_backend.Service.Google.OAuth2LoginFailureHandler;
 import com.BaPhuocTeam.barbershop_backend.Service.Google.OAuth2LoginSuccessHandler;
 import com.BaPhuocTeam.barbershop_backend.Service.Jwt.JwtAuthFilter;
 import com.BaPhuocTeam.barbershop_backend.Service.Jwt.JwtUtils;
@@ -55,6 +56,10 @@ public class SecurityConfig {
     @Lazy
     private OAuth2LoginSuccessHandler successHandler;
 
+    @Autowired
+    @Lazy
+    private OAuth2LoginFailureHandler failureHandler;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -85,6 +90,7 @@ public class SecurityConfig {
                 .oauth2Login(oauth -> oauth
                         .userInfoEndpoint(userInfo -> userInfo.userService(oAuth2UserService()))
                         .successHandler(successHandler)
+                        .failureHandler(failureHandler)
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();

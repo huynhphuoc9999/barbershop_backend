@@ -190,24 +190,31 @@ public class UserServiceImpl implements UserService{
 
         Users user = usersRepository.findByEmail(userDTO.getEmail());
         if (user == null) {
-
             Users user1 = new Users();
 
-            user1.setUsername(userDTO.getUsername());
-            user1.setEmail((userDTO.getEmail()));
-            user1.setPassword(passwordEncoder.encode("123456"));
+            String username = userDTO.getUsername();
+            if (username == null || username.isEmpty()) {
+                username = userDTO.getEmail().split("@")[0];
+            }
+
+            user1.setUsername(username);
+            user1.setEmail(userDTO.getEmail());
+            user1.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
             user1.setRoleEnum(RoleEnum.CUSTOMER);
             user1.setCreatedAt(LocalDateTime.now());
             user1.setDeleted(false);
             user1.setProvider("Google");
             user1.setImg(userDTO.getImg());
-            user1.setCreatedAt(LocalDateTime.now());
 
-            usersRepository.save(user1);
+            Users savedUser = usersRepository.save(user1);
+
+            Carts cart = new Carts();
+            cart.setUser(savedUser);
+            cartsRepository.save(cart);
 
             apiResponse.setStatusCode(200L);
             apiResponse.setMessage("Save login google success");
-            apiResponse.setData(user1);
+            apiResponse.setData(savedUser);
             apiResponse.setTimestamp(LocalDateTime.now());
             return apiResponse;
         }
