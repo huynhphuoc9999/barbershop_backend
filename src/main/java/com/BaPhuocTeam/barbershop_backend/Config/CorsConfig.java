@@ -14,11 +14,11 @@ public class CorsConfig {
             public void addCorsMappings(CorsRegistry registry) {
                 System.out.println("CORS Config Loaded");
                 registry.addMapping("/**")
-                        .allowedOrigins(
-                                "http://localhost:5173",
-                                "https://localhost:3000",
-                            "https://barbershopbpteam.vercel.app/"
-                        )
+                    .allowedOrigins(
+                        "http://localhost:5173",
+                        "https://localhost:3000",
+                        "https://barbershopbpteam.vercel.app"
+                    )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("Authorization", "Content-Type", "Cookie")
                         .exposedHeaders("Set-Cookie")
