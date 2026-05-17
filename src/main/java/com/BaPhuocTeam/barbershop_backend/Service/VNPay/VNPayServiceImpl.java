@@ -91,6 +91,49 @@ public class VNPayServiceImpl implements VNPayService{
         return hash.toString();
     }
 
+    private String buildQueryString(Map<String, String> params) {
+        StringBuilder query = new StringBuilder();
+        boolean first = true;
+        List<String> fieldNames = new ArrayList<>(params.keySet());
+        Collections.sort(fieldNames);
+        for (String fieldName : fieldNames) {
+            String value = params.get(fieldName);
+            if (value == null || value.isEmpty()) {
+                continue;
+            }
+            if (!first) {
+                query.append('&');
+            }
+            first = false;
+            query.append(fieldName)
+                    .append('=')
+                    .append(URLEncoder.encode(value, StandardCharsets.US_ASCII));
+        }
+        return query.toString();
+    }
+
+    private boolean isValidResponseHash(Map<String, String> params, String secureHash) throws NoSuchAlgorithmException, InvalidKeyException {
+        String hashData = buildQueryString(params);
+        String calculatedHash = hmacSHA512(vnpHashSecret, hashData);
+        return calculatedHash.equalsIgnoreCase(secureHash);
+    }
+
+    private String buildReturnUrl(Long userId, Long orderId, Long appointmentId) {
+        StringBuilder returnUrl = new StringBuilder(vnpReturnUrl);
+        String join = vnpReturnUrl.contains("?") ? "&" : "?";
+        if (userId != null) {
+            returnUrl.append(join).append("userId=").append(userId);
+            join = "&";
+        }
+        if (orderId != null) {
+            returnUrl.append(join).append("orderId=").append(orderId);
+            join = "&";
+        }
+        if (appointmentId != null) {
+            returnUrl.append(join).append("appointmentId=").append(appointmentId);
+        }
+        return returnUrl.toString();
+    }
 
     @Transactional
     @Override
@@ -157,7 +200,7 @@ if(paymentDTO.getOrderId() != null && paymentDTO.getAppointmentId() != null){
         vnpParams.put("vnp_OrderInfo", ORDER_INFO);
         vnpParams.put("vnp_OrderType", orderType);
         vnpParams.put("vnp_Locale", "vn");
-        vnpParams.put("vnp_ReturnUrl", vnpReturnUrl + "?userId=" + paymentDTO.getUserId() + "&orderId=" + paymentDTO.getOrderId() + "&appointmentId=" + paymentDTO.getAppointmentId());
+        vnpParams.put("vnp_ReturnUrl", buildReturnUrl(paymentDTO.getUserId(), paymentDTO.getOrderId(), paymentDTO.getAppointmentId()));
         vnpParams.put("vnp_IpAddr", vnp_IpAddr);
 
         Calendar cal = Calendar.getInstance();
@@ -168,21 +211,9 @@ if(paymentDTO.getOrderId() != null && paymentDTO.getAppointmentId() != null){
         List<String> filedNames = new ArrayList<>(vnpParams.keySet());
         Collections.sort(filedNames);
 
-        StringBuilder hashData = new StringBuilder();
-        StringBuilder query = new StringBuilder();
-
-        for(String fieldName : filedNames) {
-            String value = vnpParams.get(fieldName);
-            if(!hashData.isEmpty()) {
-                hashData.append('&');
-                query.append('&');
-            }
-            hashData.append(fieldName).append('=').append(URLEncoder.encode(value, StandardCharsets.US_ASCII));
-            query.append(fieldName).append('=').append(URLEncoder.encode(value, StandardCharsets.US_ASCII));
-        }
-
-        String vnp_SecureHash = hmacSHA512(vnpHashSecret,hashData.toString());
-        query.append("&vnp_SecureHash=").append(vnp_SecureHash);
+        String hashData = buildQueryString(vnpParams);
+        String vnp_SecureHash = hmacSHA512(vnpHashSecret, hashData);
+        String query = hashData + "&vnp_SecureHash=" + vnp_SecureHash;
 
         apiResponse.setStatusCode(200L);
         apiResponse.setMessage("Redirect to VNPay");
@@ -209,6 +240,38 @@ if(paymentDTO.getOrderId() != null && paymentDTO.getAppointmentId() != null){
             return response;
         }
 
+        String secureHash = request.getParameter("vnp_SecureHash");
+        if (secureHash == null || secureHash.isBlank()) {
+            response.setStatusCode(400L);
+            response.setMessage("Missing secure hash!");
+            response.setData(null);
+            response.setTimestamp(LocalDateTime.now());
+            return response;
+        }
+
+        Map<String, String> vnpParams = new HashMap<>();
+        request.getParameterMap().forEach((key, values) -> {
+            if (key.startsWith("vnp_") && !key.equals("vnp_SecureHash") && !key.equals("vnp_SecureHashType")) {
+                vnpParams.put(key, values.length > 0 ? values[0] : "");
+            }
+        });
+
+        try {
+            if (!isValidResponseHash(vnpParams, secureHash)) {
+                response.setStatusCode(400L);
+                response.setMessage("Invalid secure hash!");
+                response.setData(null);
+                response.setTimestamp(LocalDateTime.now());
+                return response;
+            }
+        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+            response.setStatusCode(500L);
+            response.setMessage("Error validating VNPay signature");
+            response.setData(null);
+            response.setTimestamp(LocalDateTime.now());
+            return response;
+        }
+
         // Kiểm tra mã phản hồi VNPay
         if ("00".equals(responseCode)) {
             try {
@@ -219,25 +282,24 @@ if(paymentDTO.getOrderId() != null && paymentDTO.getAppointmentId() != null){
                 );
 
                 if(amountVND != payments.getAmount()) {
-                    throw new RuntimeException("Amount mismatch");
+                    response.setStatusCode(400L);
+                    response.setMessage("Amount mismatch");
+                    response.setData(null);
+                    response.setTimestamp(LocalDateTime.now());
+                    return response;
                 }
                 payments.setPaymentStatus(PaymentStatus.COMPLETED);
-                payments.setCreatedAt(LocalDateTime.now());
                 payments.setUpdatedAt(LocalDateTime.now());
                 if(payments.getOrders() != null) {
-                    
-                Orders orders = payments.getOrders();
-orders.setStatus(OrderStatus.PAID);
-            orderRepository.save(orders);
-      
+                    Orders orders = payments.getOrders();
+                    orders.setStatus(OrderStatus.PAID);
+                    orderRepository.save(orders);
                 }
                 if(payments.getAppointments() != null) {
-                 
-                Appointments appointments = payments.getAppointments();
-appointments.setPaid(true);
-        appointmentsRepository.save(appointments);
+                    Appointments appointments = payments.getAppointments();
+                    appointments.setPaid(true);
+                    appointmentsRepository.save(appointments);
                 }
-
 
                 paymentsRepository.save(payments);
 
@@ -252,6 +314,18 @@ appointments.setPaid(true);
                 response.setData(null);
                 response.setTimestamp(LocalDateTime.now());
                 return response;
+            }
+        }
+
+        if (vnp_TxnRef != null) {
+            try {
+                Payments payments = paymentsRepository.findById(Long.valueOf(vnp_TxnRef)).orElse(null);
+                if (payments != null) {
+                    payments.setPaymentStatus(PaymentStatus.CANCELED);
+                    payments.setUpdatedAt(LocalDateTime.now());
+                    paymentsRepository.save(payments);
+                }
+            } catch (NumberFormatException ignored) {
             }
         }
 
