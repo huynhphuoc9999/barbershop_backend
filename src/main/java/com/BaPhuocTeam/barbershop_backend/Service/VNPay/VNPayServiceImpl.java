@@ -140,6 +140,23 @@ public class VNPayServiceImpl implements VNPayService{
     public APIResponse createPayment(HttpServletRequest request, PaymentDTO paymentDTO) throws NoSuchAlgorithmException, InvalidKeyException {
         APIResponse apiResponse = new APIResponse();
 
+        // Basic validation to avoid NullPointer/NumberFormat issues when FE sends invalid payload
+        if (paymentDTO.getUserId() == null) {
+            apiResponse.setStatusCode(400L);
+            apiResponse.setMessage("userId is required");
+            apiResponse.setData(null);
+            apiResponse.setTimestamp(LocalDateTime.now());
+            return apiResponse;
+        }
+
+        if (paymentDTO.getAmount() == null || paymentDTO.getAmount() <= 0) {
+            apiResponse.setStatusCode(400L);
+            apiResponse.setMessage("amount must be a positive number");
+            apiResponse.setData(null);
+            apiResponse.setTimestamp(LocalDateTime.now());
+            return apiResponse;
+        }
+
         Users user = usersRepository.findById(paymentDTO.getUserId()).orElseThrow(
                 () -> new NotFoundException("User not found")
         );
