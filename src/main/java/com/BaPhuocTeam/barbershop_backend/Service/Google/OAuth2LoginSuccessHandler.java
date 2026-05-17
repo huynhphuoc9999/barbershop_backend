@@ -1,8 +1,6 @@
 package com.BaPhuocTeam.barbershop_backend.Service.Google;
 
 import com.BaPhuocTeam.barbershop_backend.DTO.UserDTO;
-import com.BaPhuocTeam.barbershop_backend.Entity.Users;
-import com.BaPhuocTeam.barbershop_backend.Repository.UsersRepository;
 import com.BaPhuocTeam.barbershop_backend.Service.Jwt.JwtUtils;
 import com.BaPhuocTeam.barbershop_backend.Service.Jwt.UserDetailsService;
 import com.BaPhuocTeam.barbershop_backend.Service.User.UserService;
@@ -10,6 +8,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -31,6 +30,9 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
     @Autowired
     private UserDetailsService userDetailsService;
 
+    @Value("${frontend.url}")
+    private String frontendUrl;
+
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException, ServletException {
@@ -45,11 +47,11 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(userDTO.getUsername());
 
-        Authentication authentication1 = new UsernamePasswordAuthenticationToken(userDetails,null,userDetails.getAuthorities());
+        Authentication authentication1 = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(authentication1);
 
         String jwtToken = jwtUtils.generateToken(userDetails);
 
-        response.sendRedirect("http://localhost:5173/oauth2/redirect?token=" + jwtToken);
+        response.sendRedirect(frontendUrl + "/oauth2/redirect?token=" + jwtToken);
     }
 }

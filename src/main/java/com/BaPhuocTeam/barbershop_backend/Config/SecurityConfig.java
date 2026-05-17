@@ -55,6 +55,10 @@ public class SecurityConfig {
     @Lazy
     private OAuth2LoginSuccessHandler successHandler;
 
+    @Autowired
+    @Lazy
+    private OAuth2LoginFailureHandler failureHandler;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -85,6 +89,7 @@ public class SecurityConfig {
                 .oauth2Login(oauth -> oauth
                         .userInfoEndpoint(userInfo -> userInfo.userService(oAuth2UserService()))
                         .successHandler(successHandler)
+                        .failureHandler(failureHandler)
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
