@@ -137,8 +137,12 @@ if(paymentDTO.getOrderId() != null && paymentDTO.getAppointmentId() != null){
                 if(existing.getPaymentStatus() == PaymentStatus.COMPLETED) {
                     throw new RuntimeException("Payment already completed for this appointment");
                 }
-                // Nếu PENDING hoặc CANCELED → xóa payment cũ
-                paymentsRepository.delete(existing);
+                // Reuse existing payment thay vì xóa
+                transaction = existing;
+                transaction.setPaymentStatus(PaymentStatus.PENDING);
+                transaction.setAmount(paymentDTO.getAmount());
+                transaction.setPaymentMethod(paymentDTO.getMethod());
+                transaction.setCustomer(user);
             }
         }
         if(orders != null) {
@@ -148,17 +152,24 @@ if(paymentDTO.getOrderId() != null && paymentDTO.getAppointmentId() != null){
                 if(existing.getPaymentStatus() == PaymentStatus.COMPLETED) {
                     throw new RuntimeException("Payment already completed for this order");
                 }
-                // Nếu PENDING hoặc CANCELED → xóa payment cũ
-                paymentsRepository.delete(existing);
+                // Reuse existing payment thay vì xóa
+                transaction = existing;
+                transaction.setPaymentStatus(PaymentStatus.PENDING);
+                transaction.setAmount(paymentDTO.getAmount());
+                transaction.setPaymentMethod(paymentDTO.getMethod());
+                transaction.setCustomer(user);
             }
         }
 
-        transaction = new Payments();
-        transaction.setAmount(paymentDTO.getAmount());
-        transaction.setCustomer(user);
-
-        transaction.setPaymentStatus(PaymentStatus.PENDING);
-        transaction.setPaymentMethod(paymentDTO.getMethod());
+        // Nếu chưa có payment → tạo mới
+        if(transaction == null) {
+            transaction = new Payments();
+            transaction.setAmount(paymentDTO.getAmount());
+            transaction.setCustomer(user);
+            transaction.setPaymentStatus(PaymentStatus.PENDING);
+            transaction.setPaymentMethod(paymentDTO.getMethod());
+        }
+        
         if(orders != null) {
             transaction.setOrders(orders);
             transaction.setPaymentType(PaymentType.PRODUCT);
