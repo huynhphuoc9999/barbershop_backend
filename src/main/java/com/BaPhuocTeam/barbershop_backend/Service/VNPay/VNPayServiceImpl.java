@@ -33,6 +33,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
+@Transactional
 public class VNPayServiceImpl implements VNPayService{
 
     @Autowired
