@@ -203,11 +203,16 @@ public class UserServiceImpl implements UserService{
             user1.setImg(userDTO.getImg());
             user1.setCreatedAt(LocalDateTime.now());
 
-            usersRepository.save(user1);
+            Users saveUser = usersRepository.save(user1);
+
+            // Tạo cart cho user OAuth2
+            Carts cart = new Carts();
+            cart.setUser(saveUser);
+            cartsRepository.save(cart);
 
             apiResponse.setStatusCode(200L);
             apiResponse.setMessage("Save login google success");
-            apiResponse.setData(user1);
+            apiResponse.setData(saveUser);
             apiResponse.setTimestamp(LocalDateTime.now());
             return apiResponse;
         }
@@ -266,7 +271,7 @@ public class UserServiceImpl implements UserService{
         userDTO.setBirthDay(user.getBirthDay());
         userDTO.setRoleEnum(user.getRoleEnum());
         userDTO.setDeleted(user.isDeleted());
-        userDTO.setCartId(user.getCart().getId());
+        userDTO.setCartId(user.getCart() != null ? user.getCart().getId() : null);
 
         apiResponse.setStatusCode(200L);
         apiResponse.setMessage("Get users info success");
