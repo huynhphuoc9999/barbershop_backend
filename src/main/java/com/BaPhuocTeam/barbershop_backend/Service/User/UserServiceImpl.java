@@ -190,7 +190,7 @@ public class UserServiceImpl implements UserService{
 
         Users user = usersRepository.findByEmail(userDTO.getEmail());
         if (user == null) {
-
+            // Tạo user mới nếu chưa tồn tại
             Users user1 = new Users();
 
             user1.setUsername(userDTO.getUsername());
@@ -217,8 +217,15 @@ public class UserServiceImpl implements UserService{
             return apiResponse;
         }
 
+        // User đã tồn tại → merge account: update provider và img từ Google
+        if (user.getProvider() == null || !user.getProvider().equals("Google")) {
+            user.setProvider("Google");
+            user.setImg(userDTO.getImg()); // Update avatar từ Google nếu chưa có
+            usersRepository.save(user);
+        }
+
         apiResponse.setStatusCode(200L);
-        apiResponse.setMessage("Save login google success");
+        apiResponse.setMessage("Login google success - account merged");
         apiResponse.setData(user);
         apiResponse.setTimestamp(LocalDateTime.now());
         return apiResponse;
