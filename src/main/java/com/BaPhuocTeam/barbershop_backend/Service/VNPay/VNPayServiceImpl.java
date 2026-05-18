@@ -127,7 +127,32 @@ if(paymentDTO.getOrderId() != null && paymentDTO.getAppointmentId() != null){
     throw new RuntimeException("Payment cannot belong to both");
 }
 
-        Payments transaction = new Payments();
+        // Check existing payment và xử lý
+        Payments transaction = null;
+        if(appointments != null) {
+            Optional<Payments> existingPayment = paymentsRepository.findByAppointments(appointments);
+            if(existingPayment.isPresent()) {
+                Payments existing = existingPayment.get();
+                if(existing.getPaymentStatus() == PaymentStatus.SUCCESS || existing.getPaymentStatus() == PaymentStatus.COMPLETED) {
+                    throw new RuntimeException("Payment already completed for this appointment");
+                }
+                // Nếu PENDING hoặc FAILED → xóa payment cũ
+                paymentsRepository.delete(existing);
+            }
+        }
+        if(orders != null) {
+            Optional<Payments> existingPayment = paymentsRepository.findByOrders(orders);
+            if(existingPayment.isPresent()) {
+                Payments existing = existingPayment.get();
+                if(existing.getPaymentStatus() == PaymentStatus.SUCCESS || existing.getPaymentStatus() == PaymentStatus.COMPLETED) {
+                    throw new RuntimeException("Payment already completed for this order");
+                }
+                // Nếu PENDING hoặc FAILED → xóa payment cũ
+                paymentsRepository.delete(existing);
+            }
+        }
+
+        transaction = new Payments();
         transaction.setAmount(paymentDTO.getAmount());
         transaction.setCustomer(user);
 
