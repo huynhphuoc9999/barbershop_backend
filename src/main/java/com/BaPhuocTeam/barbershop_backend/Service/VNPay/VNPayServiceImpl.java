@@ -134,10 +134,10 @@ if(paymentDTO.getOrderId() != null && paymentDTO.getAppointmentId() != null){
             Optional<Payments> existingPayment = paymentsRepository.findByAppointments(appointments);
             if(existingPayment.isPresent()) {
                 Payments existing = existingPayment.get();
-                if(existing.getPaymentStatus() == PaymentStatus.SUCCESS || existing.getPaymentStatus() == PaymentStatus.COMPLETED) {
+                if(existing.getPaymentStatus() == PaymentStatus.COMPLETED) {
                     throw new RuntimeException("Payment already completed for this appointment");
                 }
-                // Nếu PENDING hoặc FAILED → xóa payment cũ
+                // Nếu PENDING hoặc CANCELED → xóa payment cũ
                 paymentsRepository.delete(existing);
             }
         }
@@ -145,10 +145,10 @@ if(paymentDTO.getOrderId() != null && paymentDTO.getAppointmentId() != null){
             Optional<Payments> existingPayment = paymentsRepository.findByOrders(orders);
             if(existingPayment.isPresent()) {
                 Payments existing = existingPayment.get();
-                if(existing.getPaymentStatus() == PaymentStatus.SUCCESS || existing.getPaymentStatus() == PaymentStatus.COMPLETED) {
+                if(existing.getPaymentStatus() == PaymentStatus.COMPLETED) {
                     throw new RuntimeException("Payment already completed for this order");
                 }
-                // Nếu PENDING hoặc FAILED → xóa payment cũ
+                // Nếu PENDING hoặc CANCELED → xóa payment cũ
                 paymentsRepository.delete(existing);
             }
         }
