@@ -8,6 +8,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -28,8 +30,10 @@ public class PaymentsController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<APIResponse> createPayment(HttpServletRequest request, @Valid @RequestBody PaymentDTO paymentDTO) throws Exception {
-        return ResponseEntity.ok(vnPayService.createPayment( request,paymentDTO));
+    public ResponseEntity<APIResponse> createPayment(HttpServletRequest request, 
+                                                     @Valid @RequestBody PaymentDTO paymentDTO,
+                                                     @AuthenticationPrincipal UserDetails userDetails) throws Exception {
+        return ResponseEntity.ok(vnPayService.createPayment(request, paymentDTO, userDetails));
     }
 
     @GetMapping("/execute/vnpay")
