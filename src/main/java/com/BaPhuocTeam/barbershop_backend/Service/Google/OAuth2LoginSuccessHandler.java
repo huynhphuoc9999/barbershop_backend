@@ -36,22 +36,36 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException, ServletException {
-        CustomOAuth2User oAuth2User = (CustomOAuth2User) authentication.getPrincipal();
+        try {
+            System.out.println("OAuth2 Login Success - Starting authentication process");
+            System.out.println("Frontend URL: " + frontendUrl);
+            
+            CustomOAuth2User oAuth2User = (CustomOAuth2User) authentication.getPrincipal();
+            System.out.println("OAuth2 User: " + oAuth2User.getName() + ", Email: " + oAuth2User.getEmail());
 
-        UserDTO userDTO = new UserDTO();
-        userDTO.setUsername(oAuth2User.getName());
-        userDTO.setEmail(oAuth2User.getEmail());
-        userDTO.setImg(oAuth2User.getPicture());
+            UserDTO userDTO = new UserDTO();
+            userDTO.setUsername(oAuth2User.getName());
+            userDTO.setEmail(oAuth2User.getEmail());
+            userDTO.setImg(oAuth2User.getPicture());
 
-        userService.processOAuthPostLogin(userDTO);
+            userService.processOAuthPostLogin(userDTO);
+            System.out.println("User processed successfully");
 
-        UserDetails userDetails = userDetailsService.loadUserByUsername(userDTO.getUsername());
+            UserDetails userDetails = userDetailsService.loadUserByUsername(userDTO.getUsername());
 
-        Authentication authentication1 = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-        SecurityContextHolder.getContext().setAuthentication(authentication1);
+            Authentication authentication1 = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+            SecurityContextHolder.getContext().setAuthentication(authentication1);
 
-        String jwtToken = jwtUtils.generateToken(userDetails);
+            String jwtToken = jwtUtils.generateToken(userDetails);
+            System.out.println("JWT Token generated successfully");
 
-        response.sendRedirect(frontendUrl + "/oauth2/redirect?token=" + jwtToken);
+            String redirectUrl = frontendUrl + "/oauth2/redirect?token=" + jwtToken;
+            System.out.println("Redirecting to: " + redirectUrl);
+            response.sendRedirect(redirectUrl);
+        } catch (Exception e) {
+            System.err.println("OAuth2 Login Error: " + e.getMessage());
+            e.printStackTrace();
+            response.sendRedirect(frontendUrl + "/login?error=oauth2_failed");
+        }
     }
 }
