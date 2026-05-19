@@ -203,7 +203,7 @@ if(paymentDTO.getOrderId() != null && paymentDTO.getAppointmentId() != null){
         vnpParams.put("vnp_OrderInfo", ORDER_INFO);
         vnpParams.put("vnp_OrderType", orderType);
         vnpParams.put("vnp_Locale", "vn");
-        vnpParams.put("vnp_ReturnUrl", vnpReturnUrl + "?userId=" + user.getId() + "&orderId=" + paymentDTO.getOrderId() + "&appointmentId=" + paymentDTO.getAppointmentId());
+        vnpParams.put("vnp_ReturnUrl", vnpReturnUrl);  // Không thêm query params
         vnpParams.put("vnp_IpAddr", vnp_IpAddr);
 
         Calendar cal = Calendar.getInstance();
