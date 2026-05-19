@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
@@ -233,20 +234,17 @@ if(paymentDTO.getOrderId() != null && paymentDTO.getAppointmentId() != null){
 
     @Transactional
     @Override
-    public APIResponse executePayment(HttpServletRequest request) {
-        APIResponse response = new APIResponse();
-
+    public void executePayment(HttpServletRequest request, HttpServletResponse httpResponse) throws IOException {
         String responseCode = request.getParameter("vnp_ResponseCode");
         String amountStr = request.getParameter("vnp_Amount");
         String vnp_TxnRef = request.getParameter("vnp_TxnRef");
 
+        String redirectUrl = frontendUrl;  // Sử dụng frontendUrl từ @Value
+
         // Kiểm tra nếu có tham số thiếu
         if (responseCode == null || amountStr == null) {
-            response.setStatusCode(400L);
-            response.setMessage("Thiếu thông tin thanh toán!");
-            response.setData(null);
-            response.setTimestamp(LocalDateTime.now());
-            return response;
+            httpResponse.sendRedirect(redirectUrl + "/payment-failed?reason=missing_params");
+            return;
         }
 
         // Kiểm tra mã phản hồi VNPay
@@ -259,46 +257,42 @@ if(paymentDTO.getOrderId() != null && paymentDTO.getAppointmentId() != null){
                 );
 
                 if(amountVND != payments.getAmount()) {
-                    throw new RuntimeException("Amount mismatch");
+                    httpResponse.sendRedirect(redirectUrl + "/payment-failed?reason=amount_mismatch");
+                    return;
                 }
+                
                 payments.setPaymentStatus(PaymentStatus.COMPLETED);
                 payments.setCreatedAt(LocalDateTime.now());
                 payments.setUpdatedAt(LocalDateTime.now());
+                
                 if(payments.getOrders() != null) {
-                    
-                Orders orders = payments.getOrders();
-orders.setStatus(OrderStatus.PAID);
-            orderRepository.save(orders);
-      
+                    Orders orders = payments.getOrders();
+                    orders.setStatus(OrderStatus.PAID);
+                    orderRepository.save(orders);
                 }
+                
                 if(payments.getAppointments() != null) {
-                 
-                Appointments appointments = payments.getAppointments();
-appointments.setPaid(true);
-        appointmentsRepository.save(appointments);
+                    Appointments appointments = payments.getAppointments();
+                    appointments.setPaid(true);
+                    appointmentsRepository.save(appointments);
                 }
-
 
                 paymentsRepository.save(payments);
 
-                response.setStatusCode(200L);
-                response.setMessage("Thanh toán thành công!");
-                response.setData(null);
-                response.setTimestamp(LocalDateTime.now());
-                return response;
+                // Redirect về frontend với payment success
+                httpResponse.sendRedirect(redirectUrl + "/payment-success?paymentId=" + payments.getId() + "&appointmentId=" + (payments.getAppointments() != null ? payments.getAppointments().getId() : ""));
+                return;
+                
             } catch (NumberFormatException e) {
-                response.setStatusCode(400L);
-                response.setMessage("Invalid amount format!");
-                response.setData(null);
-                response.setTimestamp(LocalDateTime.now());
-                return response;
+                httpResponse.sendRedirect(redirectUrl + "/payment-failed?reason=invalid_amount");
+                return;
+            } catch (Exception e) {
+                httpResponse.sendRedirect(redirectUrl + "/payment-failed?reason=processing_error");
+                return;
             }
         }
 
-        response.setStatusCode(500L);
-        response.setMessage("Thanh toán thất bại!");
-        response.setData(null);
-        response.setTimestamp(LocalDateTime.now());
-        return response;
+        // Response code khác 00 → thanh toán thất bại
+        httpResponse.sendRedirect(redirectUrl + "/payment-failed?reason=payment_cancelled&code=" + responseCode);
     }
 }

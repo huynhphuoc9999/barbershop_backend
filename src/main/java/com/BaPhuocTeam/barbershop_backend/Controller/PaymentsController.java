@@ -5,6 +5,7 @@ import com.BaPhuocTeam.barbershop_backend.Response.APIResponse;
 import com.BaPhuocTeam.barbershop_backend.Service.PaymentService.PaymentService;
 import com.BaPhuocTeam.barbershop_backend.Service.VNPay.VNPayService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +13,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 
 @RestController()
@@ -37,8 +39,8 @@ public class PaymentsController {
     }
 
     @GetMapping("/execute/vnpay")
-    public ResponseEntity<APIResponse> executePaymentVNPay(
-            HttpServletRequest request) throws Exception {
-        return ResponseEntity.ok(vnPayService.executePayment(request));
+    public void executePaymentVNPay(
+            HttpServletRequest request, HttpServletResponse response) throws Exception {
+        vnPayService.executePayment(request, response);
     }
 }
