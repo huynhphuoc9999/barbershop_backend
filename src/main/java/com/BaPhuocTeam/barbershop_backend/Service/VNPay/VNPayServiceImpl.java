@@ -64,8 +64,9 @@ public class VNPayServiceImpl implements VNPayService{
     private static final double COIN_RATE = 1000.0;
     private static final String ORDER_INFO = "Payment";
 
-    public VNPayServiceImpl(UsersRepository usersRepository, PaymentsRepository paymentsRepository, @Value("${vnp_Url}") String vnpUrl,
-                            @Value("${VNP_RETURN_URL}") String vnpReturnUrl,
+    public VNPayServiceImpl(UsersRepository usersRepository, PaymentsRepository paymentsRepository, 
+                            @Value("${vnp_Url}") String vnpUrl,
+                            @Value("${vnp_Return_Url}") String vnpReturnUrl,
                             @Value("${vnp_TmnCode}") String vnpTmnCode,
                             @Value("${vnp_HashSecret}") String vnpHashSecret) {
         this.usersRepository = usersRepository;
@@ -239,11 +240,11 @@ if(paymentDTO.getOrderId() != null && paymentDTO.getAppointmentId() != null){
         String amountStr = request.getParameter("vnp_Amount");
         String vnp_TxnRef = request.getParameter("vnp_TxnRef");
 
-        String redirectUrl = frontendUrl;  // Sử dụng frontendUrl từ @Value
+        String redirectUrl = frontendUrl + "/vnpay-return";  // Sử dụng route có sẵn trong frontend
 
         // Kiểm tra nếu có tham số thiếu
         if (responseCode == null || amountStr == null) {
-            httpResponse.sendRedirect(redirectUrl + "/payment-failed?reason=missing_params");
+            httpResponse.sendRedirect(redirectUrl + "?status=failed&reason=missing_params");
             return;
         }
 
@@ -257,7 +258,7 @@ if(paymentDTO.getOrderId() != null && paymentDTO.getAppointmentId() != null){
                 );
 
                 if(amountVND != payments.getAmount()) {
-                    httpResponse.sendRedirect(redirectUrl + "/payment-failed?reason=amount_mismatch");
+                    httpResponse.sendRedirect(redirectUrl + "?status=failed&reason=amount_mismatch");
                     return;
                 }
                 
@@ -280,19 +281,20 @@ if(paymentDTO.getOrderId() != null && paymentDTO.getAppointmentId() != null){
                 paymentsRepository.save(payments);
 
                 // Redirect về frontend với payment success
-                httpResponse.sendRedirect(redirectUrl + "/payment-success?paymentId=" + payments.getId() + "&appointmentId=" + (payments.getAppointments() != null ? payments.getAppointments().getId() : ""));
+                httpResponse.sendRedirect(redirectUrl + "?status=success&paymentId=" + payments.getId() + 
+                    "&appointmentId=" + (payments.getAppointments() != null ? payments.getAppointments().getId() : ""));
                 return;
                 
             } catch (NumberFormatException e) {
-                httpResponse.sendRedirect(redirectUrl + "/payment-failed?reason=invalid_amount");
+                httpResponse.sendRedirect(redirectUrl + "?status=failed&reason=invalid_amount");
                 return;
             } catch (Exception e) {
-                httpResponse.sendRedirect(redirectUrl + "/payment-failed?reason=processing_error");
+                httpResponse.sendRedirect(redirectUrl + "?status=failed&reason=processing_error");
                 return;
             }
         }
 
         // Response code khác 00 → thanh toán thất bại
-        httpResponse.sendRedirect(redirectUrl + "/payment-failed?reason=payment_cancelled&code=" + responseCode);
+        httpResponse.sendRedirect(redirectUrl + "?status=failed&reason=payment_cancelled&code=" + responseCode);
     }
 }
