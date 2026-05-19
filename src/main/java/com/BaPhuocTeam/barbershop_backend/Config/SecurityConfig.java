@@ -71,7 +71,7 @@ public class SecurityConfig {
                         // Thêm các đường dẫn Swagger UI và tài liệu API để không bị chặn
                         .requestMatchers("/api/login","/api/register","/api/forgot-password","/api/reset-password","/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/oauth2/**",             // 👈 Cho phép truy cập OAuth2 endpoint
                                 "/login/oauth2/**","/login/**", "/robots.txt", "/ws/**",  "/api/user-google","/api/payments/**",
-                                "/api/customer/payments/execute/vnpay").permitAll()  // VNPay callback không cần auth
+                                "/api/customer/payments/execute/vnpay", "/api/chat/**").permitAll()  // VNPay callback và Chatbot không cần auth
                         // Các API cần quyền truy cập
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/api/owner/**").hasAnyAuthority("ROLE_OWNER", "ROLE_ADMIN")
