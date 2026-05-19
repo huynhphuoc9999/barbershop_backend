@@ -62,6 +62,9 @@ public class VNPayServiceImpl implements VNPayService{
     @Value("${vnp_HashSecret}")
     private String vnpHashSecret;
 
+    @Value("${frontend.url}")
+    private String frontendUrl;
+
     private static final double COIN_RATE = 1000.0;
     private static final String ORDER_INFO = "Payment";
 
